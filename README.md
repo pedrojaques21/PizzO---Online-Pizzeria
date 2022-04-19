@@ -30,5 +30,3 @@ Input peripherals:
 Username and Password peripherals are used for login and client registration. Each of them consists of 8 characters.
 
 The Butão OK is used to validate the numeric option chosen (by entering the desired number in the NR_SEL peripheral) in menus that allow multiple options to be chosen. In each menu, the various options must be listed and then validated using this button.
-
-In this project it is expected that the student is able to develop a custom solution framed in the theme presented. The project must be running in Run mode of the simulator.
