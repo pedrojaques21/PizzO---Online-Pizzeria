@@ -30,3 +30,7 @@ Input peripherals:
 Username and Password peripherals are used for login and client registration. Each of them consists of 8 characters.
 
 The Butão OK is used to validate the numeric option chosen (by entering the desired number in the NR_SEL peripheral) in menus that allow multiple options to be chosen. In each menu, the various options must be listed and then validated using this button.
+
+## Anexo I - Processador PEPE e ligações à memória de dados
+
+![PEPE8](https://user-images.githubusercontent.com/61021739/164117969-62897d5d-9fa6-4728-81a7-4fb5fb61eb3c.png)
