@@ -1,9 +1,9 @@
-;---------------------------------------------------------------------------------------------------------------------------------------------------------------;
-;                                               Trabalho 2 AC - PizzO - Pizzaria Online                                                                         ;
-;                                                                                                                                                               ;
-;                                                       Joel Freitas - 2031915                                                                                  ;
-;                                                       Pedro Jaques - 2046919                                                                                  ;
-;---------------------------------------------------------------------------------------------------------------------------------------------------------------;
+;--------------------------------------------------------------------------------------------------------------------;
+;                                       Trabalho 2 AC - PizzO - Pizzaria Online                                      ;
+;                                                                                                                    ;
+;                                               Joel Freitas - 2031915                                               ;
+;                                               Pedro Jaques - 2046919                                               ;
+;--------------------------------------------------------------------------------------------------------------------;
 
 ;Peripherals
 
@@ -27,13 +27,15 @@
 
 ;Constants
 
+	StackPointer				EQU 	9900H		;Endereço base da pilha (stack)
+
+
 	CleaningDisplay			EQU		20H			;Carater para limpar o écran
 	Asterisk						EQU		2AH			;Caracter asterisco para a apresentação da password
 	Pular_User					EQU		30H			;Valor para poder andar de registo em registo na memória (memória de utilizadores)
 	Pular_Dentro_User		EQU		10H			;Valor para poder andar entre os vários dados do utilizador (username, password, histórico de compras)
 	Total_User					EQU		10			;Valor da totalidade de utilizadores que a memória pode ter
 	Tam_User_Pass				EQU		8				;Tamanho que o username/password pode ter
-	StackPointer				EQU 	9900H		;Endereço base da pilha (stack)
 	CriarConta					EQU 	1				;Opção fazer login
 	Fazerlogin					EQU 	2				;Opção criar conta
 	Sair_Registo_Login	EQU		3				;Opção sair do menu principal
@@ -60,14 +62,13 @@
 	DB_start	EQU		4000H		;Start address for the database
 	DB_End		EQU		5000H		;End address for the database
 
-;---------------------------------------------------------------------------------------------------------------------------------------------------------------;
-;                               										                Screens/Menus													                                                      ;
-;---------------------------------------------------------------------------------------------------------------------------------------------------------------;
+;--------------------------------------------------------------------------------------------------------------------;
+;                     										             Screens/Menus	   				                                     ;
+;--------------------------------------------------------------------------------------------------------------------;
 
 PLACE 2000H
 
 	Start_Screen:
-
 		STRING "    Welcome     "
 		STRING "      to        "
 		STRING "     PizzO      "
@@ -79,7 +80,6 @@ PLACE 2000H
 PLACE 2080H
 
 	Login_Menu:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "1. New Account  "
@@ -91,7 +91,6 @@ PLACE 2080H
 PLACE 2100H
 
 	Exit_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "   Thanks for   "
@@ -103,7 +102,6 @@ PLACE 2100H
 PLACE 2180H
 
 	Login_Register_Form:
-
 		STRING "     PizzO      "
 		STRING "    Username:   "		
 		STRING "                "
@@ -115,7 +113,6 @@ PLACE 2180H
 PLACE 2200H
 
 	Account_Created_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "Account Created "
@@ -127,7 +124,6 @@ PLACE 2200H
 PLACE 2280H
 
 	Existing_Username_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "  This Username "
@@ -138,8 +134,7 @@ PLACE 2280H
 
 PLACE 2300H
 
-	Missing_Field_Screen:				
-
+	Missing_Field_Screen:
 		STRING "     PizzO      "
 		STRING "                "
 		STRING " One field was  "
@@ -151,7 +146,6 @@ PLACE 2300H
 PLACE 2380H
 
 	Invalid_Option_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING " Invalid Option!"
@@ -163,7 +157,6 @@ PLACE 2380H
 PLACE 2400H
 
 	Account_Not_Created_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "  This Account  "
@@ -175,7 +168,6 @@ PLACE 2400H
 PLACE 2480H
 
 	Invalid_Password_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "     Invalid    "
@@ -187,7 +179,6 @@ PLACE 2480H
 PLACE 2500H
 
 	Incomplete_Password_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "     Invalid    "
@@ -199,7 +190,6 @@ PLACE 2500H
 PLACE 2580H
 
 	DB_Full_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "  Account not   "
@@ -211,7 +201,6 @@ PLACE 2580H
 PLACE 2600H
 
 	Valid_Login_Screen:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "                "
@@ -223,7 +212,6 @@ PLACE 2600H
 PLACE 2680H
 
 	Main_Menu:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "1. Order Pizza  "
@@ -235,7 +223,6 @@ PLACE 2680H
 PLACE 2700H
 
 	Pizza_Menu:
-
 		STRING "     PizzO      "
 		STRING "1. Pesto        "
 		STRING "2. Four Cheese  "
@@ -247,7 +234,6 @@ PLACE 2700H
 PLACE 2780H
 
 	Pizza_Size_Menu:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "     Sizes:     "
@@ -259,7 +245,6 @@ PLACE 2780H
 PLACE 2800H
 
 	Order_More_Or_Pay_Menu:
-
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "                "
@@ -270,13 +255,45 @@ PLACE 2800H
 		
 PLACE 2880H
 
-	Total_Screen:
-
+	Payment_Screen:
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "                "
 		STRING "TOTAL:   ,   EUR"
-		STRING "Hist.:   ,   EUR"
 		STRING "Disc.:   ,   EUR"
-		STRING " OK to continue "
+		STRING "                "
+		STRING " OK to Pay      "
+
+;--------------------------------------------------------------------------------------------------------------------;
+;                     										             Main Program  	   				                                     ;
+;--------------------------------------------------------------------------------------------------------------------;
+
+PLACE 0000H
+
+	Begin:
+		MOV R0, Start										;Moves the address of the tag Start to R0
+		JMP R0
 		
+PLACE 6000H
+
+	Start:
+		MOV SP, StackPointer						;Base of stack at 9900H
+		CALL CleanDisplayRoutine				;Routine to clean the display
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL CleanUserPassRoutine				;Routine to clean Username and Password
+		CALL ValidateRoutine						;Validation to enter
+
+	Ligado:
+		MOV R2, Start_Screen						;Move to R2 the address of the "Start_Screen"
+		CALL ShowDisplayRoutine					;Routine to display the "Start_Screen"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL CleanUserPassRoutine				;Routine to clean Username and Password
+		CALL ValidateRoutine						;Validation to enter
+
+	RotMostrarDisplay:
+
+		PUSH R0									;*********************************************************;
+		PUSH R1									;Guarda na stack os registos que são alterados na rotina
+		PUSH R3									;*********************************************************;
+		MOV R0, Display							;Endereço Base do display
+		MOV R1, Fim_Display						;Endereço Final do display
