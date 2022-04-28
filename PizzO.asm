@@ -12,46 +12,52 @@
   Password_Start    EQU  0160H 	;Address of the input peripheral Password
 	Password_End   		EQU  0167H 	;Address of the input peripheral Password
   OK_Button      		EQU  0170H 	;OK button address
-  NR_SEL_Button  		EQU  0180H 	;NR_SEL button address
+  NR_SEL_Button  		EQU  0172H 	;NR_SEL button address
 
 ;Display Adrresses
 
-  Display_Start     EQU		0010H		;Display start address
-	Display_End				EQU		007FH		;Display end address
-	Username_Start		EQU		0030H		;Start address to display the Username
-	Username_End			EQU		003FH		;End address to display the Username
-	Password_Start		EQU		0050H		;Start address to display the Password
-	Password_End			EQU		005FH		;End address to display the Password
-	Total_Euros_Start	EQU		0046H		;Start address to display the total price
-	Total_Euros_End		EQU		0048H		;End address to display the total price
-	Total_Cent_Start	EQU		004AH		;Start address to display cents
-	Total_Cent_End		EQU		004BH		;End address to display cents
+  Display_Start    					EQU		0010H		;Display start address
+	Display_End								EQU		007FH		;Display end address
+	Username_Start_Display		EQU		0030H		;Start address to display the Username
+	Username_End_Display			EQU		003FH		;End address to display the Username
+	Password_Start_Display		EQU		0050H		;Start address to display the Password
+	Password_End_Display			EQU		005FH		;End address to display the Password
+	Total_Euros_Start					EQU		0046H		;Start address to display the total price
+	Total_Euros_End						EQU		0048H		;End address to display the total price
+	Total_Cent_Start					EQU		004AH		;Start address to display cents
+	Total_Cent_End						EQU		004BH		;End address to display cents
 
 ;Constants
 
 	StackPointer				EQU 	9900H		;Endereço base da pilha (stack)
 	CleaningCharacter		EQU		20H			;Cleaning character for the display
 	Asterisk						EQU		2AH			;Asterisk character for the presentation of password
+
 	OptNewAccount				EQU 	1				;Create New Account Option
 	OptLogin						EQU 	2				;Login Option
 	OptExitLoginMenu		EQU		3				;Exit Login Menu Option
+
+	OptPesto       			EQU		1				;Pesto Pizza Option
+	OptFourCheese 			EQU 	2				;Four Cheese Pizza Option
+	OptChicken     			EQU 	3				;Chicken Pizza Option
+	OptShrimp       		EQU	  4				;Shrimp Pizza Option
+	OptHawaii						EQU		5				;Hawaii Pizza Option
+
+	OptSmall						EQU		1				;Small Pizza Option
+	OptLarge						EQU 	2				;Large Pizza Option
+
+	OptSmallPrice				EQU		5				;Small Pizza Price Option
+	OptLargePrice				EQU		9				;Large Pizza Price Option
+
+	OptYes							EQU		1				;Yes Option
+	OptNo								EQU		2				;No Option
 
 	Pular_User					EQU		30H			;Valor para poder andar de registo em registo na memória (memória de utilizadores)
 	Pular_Dentro_User		EQU		10H			;Valor para poder andar entre os vários dados do utilizador (username, password, histórico de compras)
 	Total_User					EQU		10			;Valor da totalidade de utilizadores que a memória pode ter
 	Tam_User_Pass				EQU		8				;Tamanho que o username/password pode ter
-
 	EscolherPizza				EQU		1				;Opção para fazer o pedido da pizza que pretende
 	EscolherLogout			EQU		2				;Opção caso o utilizador prentenda fazer logout do site da pizzaria
-	SPrimavera					EQU 	1				;Opção para a escolha da pizza Primavera
-	SPepperoni					EQU		2				;Opção para a escolha da pizza Pepperoni
-	SCarbonara					EQU		3				;Opção para a escolha da pizza Carbonara
-	STropical						EQU		4				;Opção para a escolha da pizza Tropical
-	SFrango							EQU		5				;Opção para a escolha da pizza Frango
-	TPequeno 						EQU		1				;Opção para a escolha do tamanho de pizza pequena
-	TGrande							EQU		2				;Opçãp para a escolha do tamanho de pizza grande 
-	PizzaPequena				EQU		5				;Valor do custo da pizza pequena
-	PizzaGrande					EQU		8				;Valor do custo da pizza grande
 	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
 	PedirMais						EQU		1				;Opção para a escolha de mais pizzas por parte do utilizador
 	PagarTotal					EQU 	2				;Opção para a escolha do pagamento do pedido do utilizador
@@ -63,6 +69,11 @@
 
 	DB_start	EQU		4000H		;Start address for the database
 	DB_End		EQU		5000H		;End address for the database
+
+PLACE 3FF0H
+
+	DB_Headers:
+		STRING "USER  PASS  HIST"
 
 ;--------------------------------------------------------------------------------------------------------------------;
 ;                     										             Screens/Menus	   				                                     ;
@@ -89,19 +100,8 @@ PLACE 2080H
 		STRING "3. Exit         "
 		STRING "                "
 		STRING "                "
-		
+
 PLACE 2100H
-
-	Exit_Screen:
-		STRING "     PizzO      "
-		STRING "                "
-		STRING "   Thanks for   "
-		STRING "   preference!  "
-		STRING "Come back always"
-		STRING "                "
-		STRING " OK to continue "
-
-PLACE 2180H
 
 	Login_Register_Form:
 		STRING "     PizzO      "
@@ -112,7 +112,7 @@ PLACE 2180H
 		STRING "                "
 		STRING " OK to continue "
 		
-PLACE 2200H
+PLACE 2180H
 
 	Account_Created_Screen:
 		STRING "     PizzO      "
@@ -123,7 +123,7 @@ PLACE 2200H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2280H
+PLACE 2200H
 
 	Existing_Username_Screen:
 		STRING "     PizzO      "
@@ -134,7 +134,7 @@ PLACE 2280H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2300H
+PLACE 2280H
 
 	Missing_Field_Screen:
 		STRING "     PizzO      "
@@ -145,7 +145,7 @@ PLACE 2300H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2380H
+PLACE 2300H
 
 	Invalid_Option_Screen:
 		STRING "     PizzO      "
@@ -156,7 +156,7 @@ PLACE 2380H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2400H
+PLACE 2380H
 
 	Account_Not_Created_Screen:
 		STRING "     PizzO      "
@@ -167,7 +167,7 @@ PLACE 2400H
 		STRING "                "
 		STRING " OK to continue "
 		
-PLACE 2480H
+PLACE 2400H
 
 	Invalid_Password_Screen:
 		STRING "     PizzO      "
@@ -178,7 +178,7 @@ PLACE 2480H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2500H
+PLACE 2480H
 
 	Incomplete_Password_Screen:
 		STRING "     PizzO      "
@@ -189,7 +189,7 @@ PLACE 2500H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2580H
+PLACE 2500H
 
 	DB_Full_Screen:
 		STRING "     PizzO      "
@@ -200,7 +200,7 @@ PLACE 2580H
 		STRING "                "
 		STRING " OK to continue "
 	
-PLACE 2600H
+PLACE 2580H
 
 	Valid_Login_Screen:
 		STRING "     PizzO      "
@@ -211,7 +211,29 @@ PLACE 2600H
 		STRING "                "
 		STRING " OK to continue "
 
+PLACE 2600H
+
+	Confirm_Exit_Menu:
+		STRING "     PizzO      "
+		STRING "                "
+		STRING "  Are you sure? "
+		STRING "1. Yes, exit    "
+		STRING "2. No, dont exit"
+		STRING "                "
+		STRING " OK to continue "
+
 PLACE 2680H
+
+	Exit_Screen:
+		STRING "     PizzO      "
+		STRING "                "
+		STRING "   Thanks for   "
+		STRING "   preference!  "
+		STRING "Come back always"
+		STRING "                "
+		STRING " OK to continue "
+
+PLACE 2700H
 
 	Main_Menu:
 		STRING "     PizzO      "
@@ -222,7 +244,7 @@ PLACE 2680H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 2700H
+PLACE 2780H
 
 	Pizza_Menu:
 		STRING "     PizzO      "
@@ -233,7 +255,7 @@ PLACE 2700H
 		STRING "5. Hawaii       "
 		STRING " OK to continue "
 		
-PLACE 2780H
+PLACE 2800H
 
 	Pizza_Size_Menu:
 		STRING "     PizzO      "
@@ -244,7 +266,7 @@ PLACE 2780H
 		STRING "                "
 		STRING " OK to continue "
 		
-PLACE 2800H
+PLACE 2880H
 
 	Order_More_Or_Pay_Menu:
 		STRING "     PizzO      "
@@ -255,7 +277,7 @@ PLACE 2800H
 		STRING "                "
 		STRING " OK to continue "
 		
-PLACE 2880H
+PLACE 2900H
 
 	Payment_Screen:
 		STRING "     PizzO      "
@@ -296,10 +318,9 @@ PLACE 6000H
 		MOV R2, Login_Menu							;Put in R2 the address of the "Login_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Login_Menu"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
-		CALL CleanUserPassRoutine				;Routine to clean Username and Password
 		CALL ValidateRoutine						;Routine to validate the selected options
 
-	ReadOption:
+	ReadOptions:
 		MOV R0, NR_SEL_Button						;Put in R0 the address of the peripheral "NR_SEL_Button"
 		MOVB R1, [R0]										;Put in R1 the content of the address "NR_SEL_Button"
 		CMP R1, OptNewAccount						;Compares the value of R1 with the constant "OptNewAccount"
@@ -308,25 +329,54 @@ PLACE 6000H
 		JEQ LoginForm										;If the values are equal, jumps to the address "LoginForm"
 		CMP R1, OptExitLoginMenu				;Compares the value of R1 with the constant "OptExitLoginMenu"
 		JEQ ConfirmExitLoginMenu				;If equal, jumps to "ConfirmExitLoginMenu"
-		MOV R2, Invalid_Option_Screen		;If the option selected by the user is not valid, moves to R2 the address of "Invalid_Option_Screen"
-		CALL ShowDisplayRoutine					;Routine to display the "Invalid_Option_Screen"
-		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
-		CALL CleanUserPassRoutine				;Routine to clean Username and Password
-		CALL ValidateRoutine						;Routine to validate the selected options
-		JMP LoginMenu										;Salta para o endereço "Liga_Menu_Principal" caso o utilizador tenha anterioremente escoliho uma opção que não apresentava no display
+		CALL InvalidOptionRoutine				;Routine to display invalid option pop up
+		JMP LoginMenu										;Goes back to menu if none where selected
 
 	NewAccountForm:
+		MOV R2, Login_Register_Form			;If the option selected by the user is not valid, moves to R2 the address of "Confirm_Exit_Menu"
+		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL ValidateRoutine						;Routine to validate the selected options
 		RET
 
 	LoginForm:
-		RET
+		MOV R2, Login_Register_Form			;If the option selected by the user is not valid, moves to R2 the address of "Confirm_Exit_Menu"
+		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL ValidateRoutine						;Routine to validate the selected options
 
 	ConfirmExitLoginMenu:
+		MOV R2, Confirm_Exit_Menu				;If the option selected by the user is not valid, moves to R2 the address of "Confirm_Exit_Menu"
+		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL ValidateRoutine						;Routine to validate the selected options
+
+	ReadExitOptions:
 		MOV R0, NR_SEL_Button						;Put in R0 the address of the peripheral "NR_SEL_Button"
 		MOVB R1, [R0]										;Put in R1 the content of the address "NR_SEL_Button"
+		CMP R1, OptYes									;Compares the value of R1 with the constant "OptYes"
+		JEQ	ExitProgram									;If true jumps to "ExitProgram"
+		CMP R1, OptNo										;Compares the value of R1 with the constant "OptNo"
+		JEQ	LoginMenu										;If true jumps back to de "LoginMenu"
+		CALL InvalidOptionRoutine				;Routine to display invalid option pop up
+		JMP LoginMenu										;Goes back to menu if none where selected
+
+	ExitProgram:
+		MOV R2, Exit_Screen							;Moves to R2 the address of "Exit_Screen"
+		CALL ShowDisplayRoutine					;Routine to display the "Exit_Screen"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
-		JMP Begining
-		RET
+		JMP Begining										;Goes back to the begining of the program
+
+;--------------------------------------------------------------------------------------------------------------------;
+;                     						      Routine to display wrong option	   				                                   ;
+;--------------------------------------------------------------------------------------------------------------------;
+
+	InvalidOptionRoutine:
+		MOV R2, Invalid_Option_Screen		;If the option selected by the user is not valid, moves to R2 the address of "Invalid_Option_Screen"
+		CALL ShowDisplayRoutine					;Routine to display the "Invalid_Option_Screen"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL ValidateRoutine						;Routine to validate the selected options
 
 ;--------------------------------------------------------------------------------------------------------------------;
 ;                     						      Routine to clean the display  	   				                                   ;
@@ -345,7 +395,7 @@ PLACE 6000H
 		CMP R0, R1											;Compares R0 (position on which is on the display) with the value of R1 (final display value)
 		JGE EndOfCleaningRoutine				;If the values are equal, the display is clean and jumps to "EndOfCleaningRoutine"
 		ADD R0, 1												;Increases 1 to the value of R0 (position in which it is on the display)
-		JMP CleanCicle									;If teh end of the display hasn't been reached yet, jump to "CleanDisplayCicle"
+		JMP CleanDisplayCicle						;If the end of the display hasn't been reached yet, jump to "CleanDisplayCicle"
 		
 	EndOfCleaningRoutine:
 		POP R3													;Removes from Stacks the records 
@@ -358,7 +408,6 @@ PLACE 6000H
 ;--------------------------------------------------------------------------------------------------------------------;
 
 	ShowDisplayRoutine:
-
 		PUSH R0													;Saves in Stack the records that are changed during the routine
 		PUSH R1									
 		PUSH R3
@@ -402,8 +451,7 @@ PLACE 6000H
 ;                     					  Routine to clean the Username and Password 				                                 ;
 ;--------------------------------------------------------------------------------------------------------------------;
 
-CleanUserPassRoutine:
-
+	CleanUserPassRoutine:
 		PUSH R0													;Saves in Stack the records that are changed during the routine		
 		PUSH R1
 		PUSH R2	
@@ -412,16 +460,14 @@ CleanUserPassRoutine:
 		MOV R1, OK_Button								;Coloca no registo R1 o endereço do periférico "Pin_OK"
 		MOV R2, 0												;Coloca em R2 a constante 0
 		
-CleanUserPassCicle:
-
+	CleanUserPassCicle:
 		CMP R0, R1											;Compara o início do periférico de entrada do username com o endereço do periférico "Pin_OK"
-		JEQ Fim_Limpeza									;Caso os valores sejam iguais, acaba a limpeza dos periféricos username e password e salta para o endereço "Fim_Limpeza"
+		JEQ EndOfCleanUserPassRoutine									;Caso os valores sejam iguais, acaba a limpeza dos periféricos username e password e salta para o endereço "Fim_Limpeza"
 		MOVB [R0], R2										;Coloca na posição de memória R0 (posição entre o inicio do periférico "Inicio_User" e o periférico "Pin_OK") o valor do registo R2
 		ADD R0, 1												;Incrementa 1 ao valor do registo R0 (posição entre o inicio do periférico "Inicio_User" e o periférico "Pin_OK")
-		JMP Ciclo_Limpar								;Caso ainda não tenha chegado ao fim, salta para o endereço "Ciclo_Limpar" para continuar a limpeza
+		JMP CleanUserPassCicle								;Caso ainda não tenha chegado ao fim, salta para o endereço "Ciclo_Limpar" para continuar a limpeza
 		
-EndOfCleanUserPassRoutine:
-
+	EndOfCleanUserPassRoutine:
 		POP R3													;Removes from Stack the records
 		POP R2
 		POP R1
@@ -435,19 +481,12 @@ EndOfCleanUserPassRoutine:
 	ValidateRoutine:
 		PUSH R6													;Saves in the stack the records that are changed in the routine
 		PUSH R7									
-		MOV R7, Pin_OK									;Put in the register R7 the address of the peripheral "OK_Button"
+		MOV R7, OK_Button									;Put in the register R7 the address of the peripheral "OK_Button"
 
-	Valida:
-		MOVB R6, [R7]							;Coloca no registo R6 o conteúdo do endereço "Pin_OK"
+	Validate:
+		MOVB R6, [R7]							;Coloca no registo R6 o conteúdo do endereço "OK_Button"
 		CMP R6, 1								;Compara o valor de R6 com a constante 1
-		JNE Valida								;Caso o valor seja diferente, ele salta para o endereço "Valida" enquanto não fizer a validação ("Pin_OK" a 1)
+		JNE Validate								;Caso o valor seja diferente, ele salta para o endereço "Valida" enquanto não fizer a validação ("OK_Button" a 1)
 		POP R7									;*********************************************************;			
 		POP R6									;               Retira da stack os registos
 		RET										;
-
-	RotMostrarDisplay:
-		PUSH R0									;*********************************************************;
-		PUSH R1									;Guarda na stack os registos que são alterados na rotina
-		PUSH R3									;*********************************************************;
-		MOV R0, Display							;Endereço Base do display
-		MOV R1, Fim_Display						;Endereço Final do display
