@@ -8,9 +8,9 @@
 ;Peripherals
 
   Username_Start    EQU  0150H 	;Address of the input peripheral Username
-	Username_End      EQU  0157H 	;Address of the input peripheral Username
+	Username_End      EQU  0155H 	;Address of the input peripheral Username
   Password_Start    EQU  0160H 	;Address of the input peripheral Password
-	Password_End   		EQU  0167H 	;Address of the input peripheral Password
+	Password_End   		EQU  0165H 	;Address of the input peripheral Password
   OK_Button      		EQU  0170H 	;OK button address
   NR_SEL_Button  		EQU  0172H 	;NR_SEL button address
 
@@ -18,10 +18,10 @@
 
   Display_Start    					EQU		0010H		;Display start address
 	Display_End								EQU		007FH		;Display end address
-	Username_Start_Display		EQU		0030H		;Start address to display the Username
-	Username_End_Display			EQU		003FH		;End address to display the Username
-	Password_Start_Display		EQU		0050H		;Start address to display the Password
-	Password_End_Display			EQU		005FH		;End address to display the Password
+	Username_Start_Display		EQU		0035H		;Start address to display the Username
+	Username_End_Display			EQU		003AH		;End address to display the Username
+	Password_Start_Display		EQU		0055H		;Start address to display the Password
+	Password_End_Display			EQU		005AH		;End address to display the Password
 	Total_Euros_Start					EQU		0046H		;Start address to display the total price
 	Total_Euros_End						EQU		0048H		;End address to display the total price
 	Total_Cent_Start					EQU		004AH		;Start address to display cents
@@ -52,10 +52,11 @@
 	OptYes							EQU		1				;Yes Option
 	OptNo								EQU		2				;No Option
 
+	UserPassMemSize			EQU		6				;Size of bits of the username and password
+	NumberOfUsersInDB		EQU 	20			;Maximum number of users allowed in DB
+
 	Pular_User					EQU		30H			;Valor para poder andar de registo em registo na memória (memória de utilizadores)
 	Pular_Dentro_User		EQU		10H			;Valor para poder andar entre os vários dados do utilizador (username, password, histórico de compras)
-	Total_User					EQU		10			;Valor da totalidade de utilizadores que a memória pode ter
-	Tam_User_Pass				EQU		8				;Tamanho que o username/password pode ter
 	EscolherPizza				EQU		1				;Opção para fazer o pedido da pizza que pretende
 	EscolherLogout			EQU		2				;Opção caso o utilizador prentenda fazer logout do site da pizzaria
 	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
@@ -68,7 +69,7 @@
 ;Database (Username, Password e purchase history)
 
 	DB_start	EQU		4000H		;Start address for the database
-	DB_End		EQU		5000H		;End address for the database
+	DB_End		EQU		4130H		;End address for the database
 
 PLACE 3FF0H
 
@@ -99,7 +100,7 @@ PLACE 2080H
 		STRING "2. Login        "
 		STRING "3. Exit         "
 		STRING "                "
-		STRING "                "
+		STRING " OK to select   "
 
 PLACE 2100H
 
@@ -217,10 +218,10 @@ PLACE 2600H
 		STRING "     PizzO      "
 		STRING "                "
 		STRING "  Are you sure? "
-		STRING "1. Yes, exit    "
-		STRING "2. No, dont exit"
 		STRING "                "
-		STRING " OK to continue "
+		STRING "1. Yes    2. No "
+		STRING "                "
+		STRING " OK to select   "
 
 PLACE 2680H
 
@@ -242,7 +243,7 @@ PLACE 2700H
 		STRING "2. Logout       "
 		STRING "                "
 		STRING "                "
-		STRING " OK to continue "
+		STRING " OK to select   "
 
 PLACE 2780H
 
@@ -253,7 +254,7 @@ PLACE 2780H
 		STRING "3. Chicken      "
 		STRING "4. Shrimp       " 
 		STRING "5. Hawaii       "
-		STRING " OK to continue "
+		STRING " OK to select   "
 		
 PLACE 2800H
 
@@ -264,7 +265,7 @@ PLACE 2800H
 		STRING "1. Small (5 EUR)"
 		STRING "2. Large (9 EUR)"
 		STRING "                "
-		STRING " OK to continue "
+		STRING " OK to select   "
 		
 PLACE 2880H
 
@@ -275,7 +276,7 @@ PLACE 2880H
 		STRING "1. Order more   "
 		STRING "2. Payment      "
 		STRING "                "
-		STRING " OK to continue "
+		STRING " OK to select   "
 		
 PLACE 2900H
 
@@ -286,7 +287,7 @@ PLACE 2900H
 		STRING "TOTAL:   ,   EUR"
 		STRING "Disc.:   ,   EUR"
 		STRING "                "
-		STRING " OK to Pay      "
+		STRING " OK to pay      "
 
 ;--------------------------------------------------------------------------------------------------------------------;
 ;                     										             Main Program  	   				                                     ;
@@ -322,7 +323,7 @@ PLACE 6000H
 
 	ReadOptions:
 		MOV R0, NR_SEL_Button						;Put in R0 the address of the peripheral "NR_SEL_Button"
-		MOVB R1, [R0]										;Put in R1 the content of the address "NR_SEL_Button"
+		MOVB R1, [R0]										;Put in R1 the value of the address "NR_SEL_Button"
 		CMP R1, OptNewAccount						;Compares the value of R1 with the constant "OptNewAccount"
 		JEQ NewAccountForm							;If the values are equal, jumps to the address "NewAccountForm"
 		CMP R1, OptLogin								;Compares the value of R1 with the constant "OptLogin"
@@ -333,20 +334,31 @@ PLACE 6000H
 		JMP LoginMenu										;Goes back to menu if none where selected
 
 	NewAccountForm:
-		MOV R2, Login_Register_Form			;If the option selected by the user is not valid, moves to R2 the address of "Confirm_Exit_Menu"
-		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
+		MOV R2, Login_Register_Form			;Moves to R2 the address of "Login_Register_Form"
+		CALL ShowDisplayRoutine					;Routine to display the "Login_Register_Form"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL CleanUserPassRoutine				;Routine to clean the username and password inputs
+		CALL ValidateRoutine						;Routine to validate the selected options
+		CALL ShowUserAndPassOnDisplayRoutine		;Routine to Show username and password on the display
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
-		RET
+
+	AccountCreatedWithSuccess:
+		MOV R2, Account_Created_Screen
+		CALL ShowDisplayRoutine					;Routine to display the "Login_Register_Form"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL CleanUserPassRoutine				;Routine to clean the username and password inputs
+		CALL ValidateRoutine						;Routine to validate the selected options
+		;JMP MakeOrder
 
 	LoginForm:
-		MOV R2, Login_Register_Form			;If the option selected by the user is not valid, moves to R2 the address of "Confirm_Exit_Menu"
-		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
+		MOV R2, Login_Register_Form			;Moves to R2 the address of "Login_Register_Form"
+		CALL ShowDisplayRoutine					;Routine to display the "Login_Register_Form"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
 
 	ConfirmExitLoginMenu:
-		MOV R2, Confirm_Exit_Menu				;If the option selected by the user is not valid, moves to R2 the address of "Confirm_Exit_Menu"
+		MOV R2, Confirm_Exit_Menu				;Moves to R2 the address of "Confirm_Exit_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
@@ -358,7 +370,7 @@ PLACE 6000H
 		JEQ	ExitProgram									;If true jumps to "ExitProgram"
 		CMP R1, OptNo										;Compares the value of R1 with the constant "OptNo"
 		JEQ	LoginMenu										;If true jumps back to de "LoginMenu"
-		CALL InvalidOptionRoutine				;Routine to display invalid option pop up
+		CALL InvalidOptionRoutine				;If the option selected does not exist calls routine to display invalid option pop up
 		JMP LoginMenu										;Goes back to menu if none where selected
 
 	ExitProgram:
@@ -369,14 +381,8 @@ PLACE 6000H
 		JMP Begining										;Goes back to the begining of the program
 
 ;--------------------------------------------------------------------------------------------------------------------;
-;                     						      Routine to display wrong option	   				                                   ;
+;                     										         End Main Program  	   				                                     ;
 ;--------------------------------------------------------------------------------------------------------------------;
-
-	InvalidOptionRoutine:
-		MOV R2, Invalid_Option_Screen		;If the option selected by the user is not valid, moves to R2 the address of "Invalid_Option_Screen"
-		CALL ShowDisplayRoutine					;Routine to display the "Invalid_Option_Screen"
-		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
-		CALL ValidateRoutine						;Routine to validate the selected options
 
 ;--------------------------------------------------------------------------------------------------------------------;
 ;                     						      Routine to clean the display  	   				                                   ;
@@ -386,46 +392,20 @@ PLACE 6000H
 		PUSH R0													;Saves in Stack the records that are changed during the routine
 		PUSH R1									
 		PUSH R3
-		MOV R0, Display_Start						;Display start address
-		MOV R1, Display_End							;Display end address
-		MOV R3, CleaningCharacter				;Put on the R3 the cleaning character (20h)
+		MOV R0, Display_Start						;Moves to R0 the "Display_Start"
+		MOV R1, Display_End							;Moves to R1 the "Display_End"
+		MOV R3, CleaningCharacter				;Moves to R3 the "CleaningCharacter"
 		
 	CleanDisplayCicle:
 		MOVB [R0], R3										;Copies CleaningCharacter to the Display
-		CMP R0, R1											;Compares R0 (position on which is on the display) with the value of R1 (final display value)
+		CMP R0, R1											;Compares R0 (position of the start of the display) with the value of R1 (end of the display)
 		JGE EndOfCleaningRoutine				;If the values are equal, the display is clean and jumps to "EndOfCleaningRoutine"
-		ADD R0, 1												;Increases 1 to the value of R0 (position in which it is on the display)
+		ADD R0, 1												;Increases 1 to the value of R0 to move to the next position on the display
 		JMP CleanDisplayCicle						;If the end of the display hasn't been reached yet, jump to "CleanDisplayCicle"
 		
 	EndOfCleaningRoutine:
 		POP R3													;Removes from Stacks the records 
 		POP R1
-		POP R0
-		RET	
-
-;--------------------------------------------------------------------------------------------------------------------;
-;                     						      Routine to show the display  	   				                                     ;
-;--------------------------------------------------------------------------------------------------------------------;
-
-	ShowDisplayRoutine:
-		PUSH R0													;Saves in Stack the records that are changed during the routine
-		PUSH R1									
-		PUSH R3
-		MOV R0, Display_Start						;Display start address
-		MOV R1, Display_End							;Display end address
-		
-	WriteDisplayCicle:
-		MOV R3, [R2]										;Copies from 
-		MOV [R0], R3										;Copy for the display
-		CMP R0, R1											;Compares the value of R0 with the value of R1
-		JGE EnfOfShowDisplayRoutine			;If the values are equal jumps to "EnfOfShowDisplayRoutine"
-		ADD R2, 2												;Increment 2 to the value of the menu word
-		ADD R0, 2												;Increment 2 to the value of the display memory
-		JMP WriteDisplayCicle						;Jump to the address "WriteDisplayCicle"
-		
-	EnfOfShowDisplayRoutine:
-		POP R3													;Removes from Stacks the records 
-		POP R1								
 		POP R0
 		RET	
 
@@ -439,7 +419,7 @@ PLACE 6000H
 		PUSH R2	
 		MOV R0, OK_Button								;Put in R0 the address of the peripheral "OK_Button"
 		MOV R1, NR_SEL_Button						;Put in R1 the address of the peripheral "NR_SEL_Button"
-		MOV R2, 0												;Put in R2 0
+		MOV R2, 0												;Put in R2 the constant 0
 		MOVB [R0], R2										;Puts in the memory position "OK_Button" the value of R2
 		MOVB [R1], R2										;Puts in the memory position "NR_SEL_Button" the value of R2
 		POP R2													;Removes from Stack the records
@@ -448,28 +428,53 @@ PLACE 6000H
 		RET
 
 ;--------------------------------------------------------------------------------------------------------------------;
+;                     						      Routine to show the display  	   				                                     ;
+;														 The Menu/Screen to display comes in the register R2																		 ;
+;--------------------------------------------------------------------------------------------------------------------;
+
+	ShowDisplayRoutine:
+		PUSH R0													;Saves in Stack the records that are changed during the routine
+		PUSH R1									
+		PUSH R3
+		MOV R0, Display_Start						;Moves to R0 the "Display_Start"
+		MOV R1, Display_End							;Moves to R1 the "Display_End"
+		
+	ShowDisplayCycle:
+		MOV R3, [R2]										;Moves from R2(the menu/screen to display) to R3 
+		MOV [R0], R3										;Moves to the display all the information on the menu/screen
+		CMP R0, R1											;Compares the value of R0 with the value of R1
+		JGE EnfOfShowDisplayRoutine			;If the values are equal everythig has been displayed so jumps to "EnfOfShowDisplayRoutine"
+		ADD R2, 2												;Increment 2 to the value of the menu word
+		ADD R0, 2												;Increment 2 to the value of the display memory
+		JMP ShowDisplayCycle						;Jump to the address "ShowDisplayCycle"
+		
+	EnfOfShowDisplayRoutine:
+		POP R3													;Removes from Stacks the records 
+		POP R1								
+		POP R0
+		RET	
+
+;--------------------------------------------------------------------------------------------------------------------;
 ;                     					  Routine to clean the Username and Password 				                                 ;
 ;--------------------------------------------------------------------------------------------------------------------;
 
-	CleanUserPassRoutine:
+	CleanUserPassRoutine: 
 		PUSH R0													;Saves in Stack the records that are changed during the routine		
 		PUSH R1
-		PUSH R2	
-		PUSH R3
-		MOV R0, Username_Start					;Puts in the R0 the address of the start of the input peripheral to the introduction of Username
-		MOV R1, OK_Button								;Coloca no registo R1 o endereço do periférico "Pin_OK"
-		MOV R2, 0												;Coloca em R2 a constante 0
+		PUSH R2
+		MOV R0, Username_Start					;Moves to R0 the address of "Username_Start"(address of the starting input of Username)
+		MOV R1, OK_Button								;Moves to R1 the address of "OK_Button"(before this address stays the address of the end of de password input peripheral)
+		MOV R2, 0												;Moves to R2 the constant 0
 		
-	CleanUserPassCicle:
-		CMP R0, R1											;Compara o início do periférico de entrada do username com o endereço do periférico "Pin_OK"
-		JEQ EndOfCleanUserPassRoutine									;Caso os valores sejam iguais, acaba a limpeza dos periféricos username e password e salta para o endereço "Fim_Limpeza"
-		MOVB [R0], R2										;Coloca na posição de memória R0 (posição entre o inicio do periférico "Inicio_User" e o periférico "Pin_OK") o valor do registo R2
-		ADD R0, 1												;Incrementa 1 ao valor do registo R0 (posição entre o inicio do periférico "Inicio_User" e o periférico "Pin_OK")
-		JMP CleanUserPassCicle								;Caso ainda não tenha chegado ao fim, salta para o endereço "Ciclo_Limpar" para continuar a limpeza
+	CleanUserPassCycle:
+		MOVB [R0], R2										;Moves the value of R2(0) to R0 (position between the beginning of the peripheral "Username_Start" and the peripheral "OK_Button")
+		CMP R0, R1											;Compares the address of R0 with R1 to check if both peripherals are clean
+		JEQ EndOfCleanUserPassRoutine		;If the values are equal, the Username and Password peripherals are clean
+		ADD R0, 1												;Increases 1 to the value of the R0 to avance 1 position of memory
+		JMP CleanUserPassCycle					;Repeats the cycle until the peripherals are clean
 		
 	EndOfCleanUserPassRoutine:
-		POP R3													;Removes from Stack the records
-		POP R2
+		POP R2													;Removes from Stack the records
 		POP R1
 		POP R0
 		RET
@@ -479,14 +484,79 @@ PLACE 6000H
 ;--------------------------------------------------------------------------------------------------------------------;
 
 	ValidateRoutine:
-		PUSH R6													;Saves in the stack the records that are changed in the routine
-		PUSH R7									
-		MOV R7, OK_Button									;Put in the register R7 the address of the peripheral "OK_Button"
+		PUSH R0													;Saves in the stack the records that are changed in the routine
+		PUSH R1									
+		MOV R0, OK_Button								;Moves to R0 the address of "OK_Button"
 
 	Validate:
-		MOVB R6, [R7]							;Coloca no registo R6 o conteúdo do endereço "OK_Button"
-		CMP R6, 1								;Compara o valor de R6 com a constante 1
-		JNE Validate								;Caso o valor seja diferente, ele salta para o endereço "Valida" enquanto não fizer a validação ("OK_Button" a 1)
-		POP R7									;*********************************************************;			
-		POP R6									;               Retira da stack os registos
-		RET										;
+		MOVB R1, [R0]										;Moves to R1 the value of "OK_Button"
+		CMP R1, 1												;Compares the value of R1 with the constant 1
+		JNE Validate										;If not equal, jump to  "Validate" address until it does the validation, creating a loop
+		POP R1													;Remove the records from the Stack
+		POP R0
+		RET
+
+;--------------------------------------------------------------------------------------------------------------------;
+;                     						      Routine to display wrong option	   				                                   ;
+;--------------------------------------------------------------------------------------------------------------------;
+
+	InvalidOptionRoutine:
+		MOV R2, Invalid_Option_Screen		;Moves to R2 the address of "Invalid_Option_Screen"
+		CALL ShowDisplayRoutine					;Routine to display the "Invalid_Option_Screen"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL ValidateRoutine						;Routine to validate the selected options
+		RET
+
+;--------------------------------------------------------------------------------------------------------------------;
+;                     				  Show Username And Password On Display Routine		   							                     ;
+;--------------------------------------------------------------------------------------------------------------------;
+
+	ShowUserAndPassOnDisplayRoutine:
+		PUSH R0													;Saves in the stack the records that are changed in the routine
+		PUSH R1
+		PUSH R2
+		PUSH R3
+		PUSH R4
+		PUSH R5
+		PUSH R6
+		PUSH R7
+		MOV R0, Username_Start					;Moves to R0 the address of the start of the peripheral Username
+		MOV R1, Password_Start					;Move to R1 the address of the start of the peripheral Password
+		MOV R2, Asterisk								;Move to R2 the constant "Asterisk"
+		MOV R3, Username_Start_Display	;Move to R3 the address of the display where Username will start to be displayed
+		MOV R4, Username_End_Display		;Move to R4 the address of the display where Username will end to be displayed
+		MOV R5, Password_Start_Display	;Move to R5 the address of the display where Password will start to be displayed
+		MOV R6, Password_End_Display		;Move to R6 the address of the display where Password will end to be displayed
+		
+	CopyUserToDisplayCycle:
+		MOVB R7, [R0]										;Moves to R7 the value of R0(first character of Username)
+		CMP R7, 0												;Compares the value of R3 with 0, to check if the end of inserted Username was reached
+		JEQ CopyPassToDisplayCycle			;If equal, jump to "CopyPassToDisplayCycle"
+		MOVB [R3], R7										;Shows in the display the character from username peripheral
+		CMP R3, R4											;Compares the beginning of the display for the peripheral of Username with the end
+		JEQ CopyPassToDisplayCycle			;If the end of the display was reached, it jumps to "CopyPassToDisplayCycle"
+		ADD R0, 1												;Increment 1 to the input peripheral for Username
+		ADD R3, 1												;Increment 1 to the display for the introduction of Username
+		JMP CopyUserToDisplayCycle			;Repeats the cycle if the Username isn't all copied
+		
+	CopyPassToDisplayCycle:
+		MOVB R7, [R1]										;Move to R3 the value of R1
+		CMP R7, 0												;Compares the value of R3 with 0, to check if the end of inserted Password was reached
+		JEQ EndOfShowUserAndPassOnDisplayRoutine	;If equal, it jump to "EndOfShowUserAndPassOnDisplayRoutine"
+		MOVB [R5], R2										;Shows in the display the character from password peripheral
+		CMP R5, R6											;Compares the beginning of the display for the peripheral of Password with the end
+		JEQ EndOfShowUserAndPassOnDisplayRoutine	;If you have reached the end of the display, it jumps to the address "EndOfShowUserAndPassOnDisplayRoutine"
+		ADD R1, 1												;Increment 1 to the input peripheral referring to Password
+		ADD R5, 1												;Increment 1 to the display for the introduction of Password
+		JMP CopyPassToDisplayCycle			;Repeats the cycle if the Password isn't all copied
+		
+	EndOfShowUserAndPassOnDisplayRoutine:
+		POP R7													;Remove the records from the Stack
+		POP R6
+		POP R5
+		POP R4
+		POP R3
+		POP R2
+		POP R1
+		POP R0
+		RET
