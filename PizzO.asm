@@ -52,11 +52,11 @@
 	OptYes							EQU		1				;Yes Option
 	OptNo								EQU		2				;No Option
 
-	UserPassMemSize			EQU		6				;Size of bits of the username and password
-	NumberOfUsersInDB		EQU 	20			;Maximum number of users allowed in DB
+	UserPassMemSize			EQU		6				;Size of bytes of the username and password
+	MaxUsersInDB				EQU 	5				;Maximum number of users allowed in DB
+	Iterate_User				EQU		10H			;Value to be able to iterate between users in database
+	Iterate_User_Info		EQU		6H			;Value to be able to iterate between user info (username, password, historic)
 
-	Pular_User					EQU		30H			;Valor para poder andar de registo em registo na memória (memória de utilizadores)
-	Pular_Dentro_User		EQU		10H			;Valor para poder andar entre os vários dados do utilizador (username, password, histórico de compras)
 	EscolherPizza				EQU		1				;Opção para fazer o pedido da pizza que pretende
 	EscolherLogout			EQU		2				;Opção caso o utilizador prentenda fazer logout do site da pizzaria
 	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
@@ -68,8 +68,8 @@
 
 ;Database (Username, Password e purchase history)
 
-	DB_start	EQU		4000H		;Start address for the database
-	DB_End		EQU		4130H		;End address for the database
+	DB_Start	EQU		4000H		;Start address for the database
+	DB_End		EQU		4040H		;End address for the database
 
 PLACE 3FF0H
 
@@ -195,8 +195,8 @@ PLACE 2500H
 	DB_Full_Screen:
 		STRING "     PizzO      "
 		STRING "                "
-		STRING "  Account not   "
-		STRING "    created!    "
+		STRING " Can not create "
+		STRING "    Account!    "
 		STRING " Full Database! "
 		STRING "                "
 		STRING " OK to continue "
@@ -334,6 +334,10 @@ PLACE 6000H
 		JMP LoginMenu										;Goes back to menu if none where selected
 
 	NewAccountForm:
+		CALL CheckUsersInDBRoutine			;Routine to check if more users can be added(R4 keeps with number of users in DB)
+		MOV R1, MaxUsersInDB						;Moves to R1 the maximum number of users allowed in DB
+		CMP R4, R1											;Compares R10 with R1 to check if there is space available in DB
+ 		JEQ FullDataBasePopUp						;If no space available jumps to full DB screen 
 		MOV R2, Login_Register_Form			;Moves to R2 the address of "Login_Register_Form"
 		CALL ShowDisplayRoutine					;Routine to display the "Login_Register_Form"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
@@ -343,13 +347,19 @@ PLACE 6000H
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
 
+	FullDataBasePopUp:
+		MOV R2, DB_Full_Screen
+		CALL ShowDisplayRoutine					;Routine to display the "DB_Full_Screen"
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL CleanUserPassRoutine				;Routine to clean the username and password inputs
+		CALL ValidateRoutine						;Routine to validate the selected options
+
 	AccountCreatedWithSuccess:
 		MOV R2, Account_Created_Screen
 		CALL ShowDisplayRoutine					;Routine to display the "Login_Register_Form"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL CleanUserPassRoutine				;Routine to clean the username and password inputs
 		CALL ValidateRoutine						;Routine to validate the selected options
-		;JMP MakeOrder
 
 	LoginForm:
 		MOV R2, Login_Register_Form			;Moves to R2 the address of "Login_Register_Form"
@@ -560,3 +570,34 @@ PLACE 6000H
 		POP R1
 		POP R0
 		RET
+;--------------------------------------------------------------------------------------------------------------------;
+;                     		 Routine to check how many users are there in the Database	  				                     ;
+;--------------------------------------------------------------------------------------------------------------------;
+
+	CheckUsersInDBRoutine:
+		PUSH R0													;Saves in the stack the records that are changed in the routine
+		PUSH R1
+		PUSH R2
+		PUSH R3
+		MOV R0, DB_Start								;Address of the start of the Database
+		MOV R1, DB_End									;Address of the end of the Database
+		MOV R2, Iterate_User						;Value that serves to ride a user in user in memory
+		MOV R4, 0												;Moves to R4 the value 0 (variable to count number of users)
+
+	CheckCycle:
+		CMP R0, R1											;Compares R0 with R1 to check if the end of DB was reached
+		JGT EndOfCheckUsersInDBRoutine	;If greater, the end of database was reached
+		MOVB R3, [R0]										;Moves to R3 the value of R0
+		CMP R3, 0												;Compares R3 with 0
+		JEQ EndOfCheckUsersInDBRoutine	;If equal, all users in the memory have been checked, jumps to "EndOfCheckUsersInDBRoutine"
+		ADD R4, 1												;Increments 1 to R4 (variable to count number of users)
+		ADD R0, R2											;Increments the address in R0 to iterate to the next user
+		JMP CheckCycle									;Repeats until all users are checked
+	
+	EndOfCheckUsersInDBRoutine:
+		POP R3													;Remove the records from the stack							
+		POP R2
+		POP R1
+		POP R0
+		RET
+		
