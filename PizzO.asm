@@ -1,16 +1,16 @@
-;--------------------------------------------------------------------------------------------------------------------;
-;                                       Trabalho 2 AC - PizzO - Pizzaria Online                                      ;
-;                                                                                                                    ;
-;                                               Joel Freitas - 2031915                                               ;
-;                                               Pedro Jaques - 2046919                                               ;
-;--------------------------------------------------------------------------------------------------------------------;
+;-------------------------------------------------------------------------------------------------------------------;
+;                                       Trabalho 2 AC - PizzO - Pizzaria Online                                     ;
+;                                                                                                                   ;
+;                                               Joel Freitas - 2031915                                              ;
+;                                               Pedro Jaques - 2046919                                              ;
+;-------------------------------------------------------------------------------------------------------------------;
 
 ;Peripherals
 
   Username_Start    EQU  0150H 	;Address of the input peripheral Username
-	Username_End      EQU  0155H 	;Address of the input peripheral Username
+	Username_End      EQU  0157H 	;Address of the input peripheral Username
   Password_Start    EQU  0160H 	;Address of the input peripheral Password
-	Password_End   		EQU  0165H 	;Address of the input peripheral Password
+	Password_End   		EQU  0167H 	;Address of the input peripheral Password
   OK_Button      		EQU  0170H 	;OK button address
   NR_SEL_Button  		EQU  0172H 	;NR_SEL button address
 
@@ -18,10 +18,10 @@
 
   Display_Start    					EQU		0010H		;Display start address
 	Display_End								EQU		007FH		;Display end address
-	Username_Start_Display		EQU		0035H		;Start address to display the Username
-	Username_End_Display			EQU		003AH		;End address to display the Username
-	Password_Start_Display		EQU		0055H		;Start address to display the Password
-	Password_End_Display			EQU		005AH		;End address to display the Password
+	Username_Start_Display		EQU		0034H		;Start address to display the Username
+	Username_End_Display			EQU		003BH		;End address to display the Username
+	Password_Start_Display		EQU		0054H		;Start address to display the Password
+	Password_End_Display			EQU		005BH		;End address to display the Password
 	Total_Euros_Start					EQU		0046H		;Start address to display the total price
 	Total_Euros_End						EQU		0048H		;End address to display the total price
 	Total_Cent_Start					EQU		004AH		;Start address to display cents
@@ -59,10 +59,10 @@
 	OptYes							EQU		1				;Yes Option
 	OptNo								EQU		2				;No Option
 
-	UserPassMaxSize			EQU		6				;Maximum character size for Username and Password
 	MaxUsersInDB				EQU 	5				;Maximum number of users allowed in DB
-	Iterate_User				EQU		10H			;Value to be able to iterate between users in Database
-	Iterate_User_Info		EQU		06H			;Value to be able to iterate between user info (Username, Password, historic)
+	Iterate_User				EQU		30H			;Value to be able to iterate between users in Database
+	Iterate_User_Info		EQU		10H			;Value to be able to iterate between user info (Username, Password, historic)
+	UserPassMaxSize			EQU		8				;Maximum character size for Username and Password
 
 	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
 	PedirMais						EQU		1				;Opção para a escolha de mais pizzas por parte do utilizador
@@ -74,12 +74,7 @@
 ;Database (Username, Password e purchase history)
 
 	DB_Start	EQU		4000H		;Start address for the Database
-	DB_End		EQU		4040H		;End address for the Database
-
-PLACE 3FF0H
-
-	DB_Headers:
-		STRING "USER  PASS  HIST"
+	DB_End		EQU		40F0H		;End address for the Database
 
 ;-------------------------------------------------------------------------------------------------------------------;
 ;                     										             Screens/Menus	   				                                    ;
@@ -387,8 +382,7 @@ PLACE 6000H
 
 	NewAccountForm:
 		CALL CheckUsersInDBRoutine			;Routine to check if more users can be added(R4 keeps with number of users in DB)
-		MOV R1, MaxUsersInDB						;Moves to R1 the maximum number of users allowed in DB
-		CMP R4, R1											;Compares R4 with R1 to check if there is space available in DB
+		CMP R4, MaxUsersInDB						;Compares R4 with R1 to check if there is space available in DB
  		JEQ FullDataBasePopUp						;If no space available jumps to full DB screen 
 		MOV R2, Register_Form						;Moves to R2 the address of "Register_Form"
 		CALL ShowDisplayRoutine					;Routine to display the "Register_Form"
@@ -399,14 +393,15 @@ PLACE 6000H
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
 		CALL CheckUsername							;Routine to check if the Username inserted is already taken
-		CMP R10, UserPassMaxSize				;Compares R10 with UserPassMaxSize constant to check if characters are equal to the one in DB
+		MOV R9, UserPassMaxSize					;Moves to R9 the constant "UserPassMaxSize"
+		CMP R7, R9											;Compares R7 with UserPassMaxSize constant to check if characters are equal to the one in DB
 		JEQ	ExistingUsernamePopUp				;If equal jumps to "ExistingUsernamePopUp"
 		CALL CheckFormFieldsCycle				;Routine to check if any field was left empty
-		CMP R9, 0												;Compares the value of R9 (amount of characters that Username has) with 0
-		JEQ MissingFieldPopUp						;If equal, no Username was inserted, jumps to "MissingFieldPopUp"
-		CMP R10, 0											;Compares the value of R10 (amount of characters that Password has) with 0
-		JEQ MissingFieldPopUp						;If equal, no Password was inserted, jumps to "MissingFieldPopUp"
-		CMP R10, 3											;Compares the value of R10 (amount of characters that Password has) with 3
+		CMP R5, 0												;Compares the value of R5 (amount of characters that Username has) with 0
+		JLE MissingFieldPopUp						;If equal, no Username was inserted, jumps to "MissingFieldPopUp"
+		CMP R6, 0												;Compares the value of R6 (amount of characters that Password has) with 0
+		JLE MissingFieldPopUp						;If equal, no Password was inserted, jumps to "MissingFieldPopUp"
+		CMP R6, 3												;Compares the value of R6 (amount of characters that Password has) with 3
 		JLT IncompletePasswordPopUp			;If less, the Password was incomplete(at least 3 characters), jumps to "IncompletePasswordPopUp"
 		CALL SaveUserInDBRoutine				;Routine to save new user to the Database
 		JMP	AccountCreatedWithSuccess		;After creating account jumps to "AccountCreatedWithSuccess"
@@ -460,10 +455,11 @@ PLACE 6000H
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
 		CALL CheckUsername							;Routine to check if the Username inserted is equal to any on the DB
-		CMP R10, UserPassMaxSize				;Compares R10 with UserPassMaxSize constant to check if Username exists in DB
+		MOV R9, UserPassMaxSize 				;Moves to R9 the constant "UserPassMaxSize"
+		CMP R7, R9											;Compares R10 with UserPassMaxSize constant to check if Username exists in DB
 		JLT	UsernameNotFound						;If less than 6, it means that the Username inserted is not in the Database, so jumps to "UsernameNotFound"
 		CALL CheckPassword							;Routine to check the Username and Password
-		CMP R10, UserPassMaxSize				;Compares R10 with UserPassMaxSize constant to check if Username exists in DB
+		CMP R10, R9											;Compares R10 with UserPassMaxSize constant to check if Username exists in DB
 		JLT	InvalidPassword							;If less than 6, it means that the Password inserted is not correct Database, so jumps to "InvalidPassword"
 		CALL CleanUserPassRoutine				;Routine to clean the Username and Password inputs
 		JMP	MainMenu
@@ -634,12 +630,12 @@ PLACE 6000H
 		MOV R3, [R2]										;Moves from R2(the menu/screen to display) to R3
 		MOV [R0], R3										;Moves to the display all the information on the menu/screen		
 		CMP R0, R1											;Compares the address of the start of the Display with the address of the end of the display
-		JGE EnfOfShowDisplayRoutine			;If equal, everythig has been displayed, so terminates the routine		
+		JGE EndOfShowDisplayRoutine			;If equal, everythig has been displayed, so terminates the routine		
 		ADD R2, 2												;Increments 2 to R2, to move to the next byte to be displayed
 		ADD R0, 2												;Increments 2 to the value of the display memory to display the next byte
 		JMP ShowDisplayCycle						;Repeats the cycle
 		
-	EnfOfShowDisplayRoutine:
+	EndOfShowDisplayRoutine:
 		POP R3													;Removes from Stacks the records 
 		POP R1
 		POP R0
@@ -708,7 +704,7 @@ PLACE 6000H
 	Validate:
 		MOVB R1, [R0]										;Moves to R1 the value of "OK_Button"
 		CMP R1, 1												;Compares the value of R1 with 1
-		JNE Validate										;If not equal, jump to  "Validate" address until it does the validation, creating a loop
+		JLT Validate										;If not equal, jump to  "Validate" address until it does the validation, creating a loop
 
 	EndOfValidateRoutine:
 		POP R1													;Remove the records from the Stack
@@ -805,7 +801,7 @@ PLACE 6000H
 		JMP CheckCycle									;Repeats until all users are checked
 	
 	EndOfCheckUsersInDBRoutine:
-		POP R3													;Remove the records from the stack							
+		POP R3													;Remove the records from the stack	
 		POP R2
 		POP R1
 		POP R0
@@ -823,42 +819,39 @@ PLACE 6000H
 		PUSH R4
 		PUSH R5
 		PUSH R6
-		PUSH R7
 		PUSH R8
-		MOV R0, Username_Start					;Moves to R0 the start of the Username peripheral
-		MOV R1, Username_End						;Moves to R1 the end of the Username peripheral
-		MOV R2, DB_Start								;Moves to R3 the start of the Database
-		MOV R3, DB_End
-		MOV R4, Iterate_User						
-		MOV R5, Iterate_User_Info
-		MOV R6, 0
+		MOV R0, Username_Start					;Moves to R0 the address of the start of the Username peripheral
+		MOV R1, Username_End						;Moves to R1 the address of the end of the Username peripheral
+		MOV R2, DB_Start								;Moves to R2 the address of the start of the Database
+		MOV R3, DB_End									;Moves to R3 the address of the end of the Database
+		MOV R4, Iterate_User						;Moves to R4 the value to iterate between users
+		MOV R7, 0												;Variable to count how many equal characters
+		MOV R8, R2											;Moves to R8 the address of the start of the Database
 		
 	VerificationCycle:
 		CMP R2, R3											;Check if the end of the database as been reached
 		JGT	EndOfCheckUsername					;If yes, jumps to the end of the routine
 		CMP R0, R1											;Check if the end of the Username peripheral was reached
 		JGT	NextUserCycle								;If yes, Username all checked, jumps to "NextUserCycle"
-		MOVB R7, [R0]										;Moves to R7 the value of the first character in the input
-		MOVB R8, [R2]										;Moves to R8 the value of the first character in the Database
-		CMP R7, R8											;Compares it with the first character of the first Username in the database
-		JNE	NextUserCycle								;If not equal, jumps to "NextUserCycle"
-		ADD R6, 1												;Adds 1 to the variable that saves the number of equal characters
-		CMP R6,	6												;Compares with 6 to check if all characters are equal
-		JEQ	EndOfCheckUsername					;If equal, jumps to "EndOfCheckUsername"
+		MOVB R5, [R0]										;Moves to R5 the value of the first character in the input
+		MOVB R6, [R2]										;Moves to R6 the value of the first character in the Database
+		CMP R5, R6											;Compares it with the first character of the first Username in the database
+		JEQ	NextCharCycle								;If equal, jumps to "NextCharCycle"
+
+	NextUserCycle:
+		MOV R0, Username_Start					;Resets R0 to the begin os Username peripheral
+		ADD R8, R4											;Iterates to the next username in the database
+		MOV R2, R8											;Moves to R2 that address to the next check
+		JMP	VerificationCycle						;Goes back to "VerificationCycle"
+
+	NextCharCycle:
+		ADD R7, 1												;Adds 1 to the variable that saves the number of equal characters
 		ADD R0, 1												;Adds 1 to move to next character on the Username
 		ADD R2, 1												;Adds 1 to move to next character on the database
 		JMP VerificationCycle						;Repeats the cycle until all Username is checked
 
-	NextUserCycle:
-		MOV R0, Username_Start					;Resets R0 to the begin os Username peripheral
-		SUB R2, R5											;Goes back to the address of begin of username in database
-		ADD R2, R4											;Adds R2 to R4 to iterate to the next user in the Database
-		JMP	VerificationCycle						;Goes back to "VerificationCycle"
-
 	EndOfCheckUsername:
-		MOV R10, R6											;Moves the number of equal chars to R10
 		POP R8													;Remove the records from the stack
-		POP R7
 		POP R6
 		POP R5
 		POP R4
@@ -887,34 +880,34 @@ PLACE 6000H
 		MOV R2, DB_Start								;Moves to R2 the address of the start of the Database
 		MOV R3, DB_End									;Moves to R3 the address of the end of the Database
 		MOV	R4, Iterate_User
-		MOV R5, Iterate_User_Info				
-		MOV R6, 0												;Moves to R6 the constant 0, this will be counting how many characters are equal
+		MOV R5, Iterate_User_Info
+		MOV R9, 0												;Variable to count equal chars
 		ADD R2, R5											;Jumps to the address where the password is saved in database
+		MOV R6, R2
 	
 	VerificatePasswordCycle:
 		CMP R2, R3											;Check if the end of the database as been reached
 		JGT	EndOfCheckPassword					;If yes, jumps to the end of the routine
 		CMP R0, R1											;Compares start of Password input peripheral with the end of it
 		JGT	NextPasswordCycle						;If equal, Password all checked, jumps to "NextPasswordCycle"
-		MOVB R7, [R0]										;Moves to R5 the value of the first character in the input
-		MOVB R8, [R2]										;Moves to R6 the value of the first character in the Database
+		MOVB R7, [R0]										;Moves to R7 the value of the first character in the input
+		MOVB R8, [R2]										;Moves to R8 the value of the first character in the Database
 		CMP R7, R8											;Compares it with the first character of the first Password in the database
-		JNE	NextPasswordCycle						;If not equal, jumps to "NextPasswordCycle"
-		ADD R6, 1												;Adds 1 to the variable that saves the number of equal characters
-		CMP R6,	6												;Compares with 6 to check if all characters are equal
-		JEQ	EndOfCheckPassword					;If equal, jumps to "EndOfCheckPassword"
+		JEQ NextPassCharCycle						;If equal, jumps to the next char
+	
+	NextPasswordCycle:
+		MOV R0, Password_Start					;Resets R0 to the begin os Password peripheral
+		ADD R6, R4											;Jumps R3 address to the start os Password address in the Database
+		MOV R2, R6
+		JMP	VerificatePasswordCycle			;Goes back to "VerificatePasswordCycle"
+
+	NextPassCharCycle:
+		ADD R9, 1												;Adds 1 to the variable that saves the number of equal characters
 		ADD R0, 1												;Adds 1 to move to next character on the Password
 		ADD R2, 1												;Adds 1 to move to next character on the database
 		JMP VerificatePasswordCycle			;Repeats the cycle until all Password is checked
 
-	NextPasswordCycle:
-		MOV R0, Password_Start					;Resets R0 to the begin os Password peripheral
-		SUB R3, R5											;Resets R3 to the begin of the Password in the Database
-		ADD R3, R4											;Jumps R3 address to the start os Password address in the Database
-		JMP	VerificatePasswordCycle			;Goes back to "VerificatePasswordCycle"
-
 	EndOfCheckPassword:
-		MOV R10, R6											;Moves the number of equal chars to R10
 		POP R8													;Remove the records from the stack
 		POP R7
 		POP R6
@@ -936,8 +929,6 @@ PLACE 6000H
 		PUSH R2
 		PUSH R3
 		PUSH R4
-		PUSH R5
-		PUSH R6
 		MOV R0, Username_Start					;Moves to R0 the address of the start of the input peripheral Username
 		MOV R1, Username_End						;Moves to R1 the address of the end of the input peripheral Username
 		MOV R2, Password_Start					;Moves to R2 the address of the start of the input peripheral Password
@@ -946,28 +937,28 @@ PLACE 6000H
 		MOV R6, 0												;Flag: 0 - no Password, >1 - has Password
 		
 	CheckUserFieldCycle:
-		CMP R0, R1											;Compares the start of the Username peripheral with the end
-		JGT CheckPassFieldCycle					;If greater, the peripheral was all checked, jumps to "CheckPassFieldCycle"
 		MOVB R4, [R0]										;Moves to R4 the value of the R0 address
 		CMP R4, 0												;Compares the value of R4 (character of the Username peripheral) with 0
-		JNE CheckPassFieldCycle					;If different, the Username peripheral contains written characters, jumps to the "CheckPassFieldCycle"
-		ADD R0, 1												;Increments 1 to R0 (next character of the Username peripheral)
+		JGT UsernameFound								;If greatter, the Username peripheral contains written characters, jumps to the "UsernameFound"
+		JMP CheckPassFieldCycle					;Else, jumps to CheckPassFieldCycle
+
+	UsernameFound:
 		ADD R5, 1
-		JMP CheckUserFieldCycle					;Repeats the cycle until all Username is checked
 
 	CheckPassFieldCycle:
 		CMP R2, R3											;Compares the start of the Password peripheral with the end
 		JGT EndOFCheckFormFieldsCycle 	;If greater, the peripheral was all checked, jumps to "EndOFCheckFormFieldsCycle"
 		MOVB R4, [R2]										;Moves to R4 the content of the address of R2
-		CMP R4, 0												;Compares the value of R4 (character of th Password peripheral) with 0
-		JNE EndOFCheckFormFieldsCycle		;If different, the Password input peripheral contains written characters, jumps to "EndOFCheckFormFieldsCycle"
-		ADD R2, 1												;Increments 1 to the value of the R2 (next Password peripheral character)
+		CMP R4, 0												;Compares the value of R4 (character of the Password peripheral) with 0
+		JGT PasswordCharFound						;If greatter, the Password input peripheral contains written characters, jumps to "PasswordCharFound"
+		JMP EndOFCheckFormFieldsCycle		;Else jumps to terminate the routine
+
+	PasswordCharFound:
 		ADD R6, 1												;Increments the flag that tells if there are characters
-		JMP CheckPassFieldCycle					;Repeats the cycle until all Password is checked				
+		ADD R2, 1												;Increments 1 to the value of the R2 (next Password peripheral character)
+		JMP CheckPassFieldCycle
 
 	EndOFCheckFormFieldsCycle:
-		MOV R9, R5
-		MOV R10, R6
 		POP R4													;Remove the records from the stack
 		POP R3
 		POP R2
