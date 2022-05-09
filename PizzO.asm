@@ -62,7 +62,7 @@
 	UserPassMaxSize			EQU		6				;Maximum character size for Username and Password
 	MaxUsersInDB				EQU 	5				;Maximum number of users allowed in DB
 	Iterate_User				EQU		10H			;Value to be able to iterate between users in Database
-	Iterate_User_Info		EQU		6H			;Value to be able to iterate between user info (Username, Password, historic)
+	Iterate_User_Info		EQU		06H			;Value to be able to iterate between user info (Username, Password, historic)
 
 	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
 	PedirMais						EQU		1				;Opção para a escolha de mais pizzas por parte do utilizador
@@ -936,12 +936,14 @@ PLACE 6000H
 		PUSH R2
 		PUSH R3
 		PUSH R4
-		MOV R0, Username_Start_Display	;Moves to R0 the address of the start of the input peripheral Username
-		MOV R1, Username_End_Display		;Moves to R1 the address of the end of the input peripheral Username
-		MOV R2, Password_Start_Display	;Moves to R2 the address of the start of the input peripheral Password
-		MOV R3, Password_End_Display		;Moves to R3 the address of the start of the input peripheral Password
-		MOV R9, 0												;Flag: 0 - no Username, >1 - has Username
-		MOV R10, 0											;Flag: 0 - no Password, >1 - has Password
+		PUSH R5
+		PUSH R6
+		MOV R0, Username_Start					;Moves to R0 the address of the start of the input peripheral Username
+		MOV R1, Username_End						;Moves to R1 the address of the end of the input peripheral Username
+		MOV R2, Password_Start					;Moves to R2 the address of the start of the input peripheral Password
+		MOV R3, Password_End						;Moves to R3 the address of the start of the input peripheral Password
+		MOV R5, 0												;Flag: 0 - no Username, >1 - has Username
+		MOV R6, 0												;Flag: 0 - no Password, >1 - has Password
 		
 	CheckUserFieldCycle:
 		CMP R0, R1											;Compares the start of the Username peripheral with the end
@@ -950,7 +952,7 @@ PLACE 6000H
 		CMP R4, 0												;Compares the value of R4 (character of the Username peripheral) with 0
 		JNE CheckPassFieldCycle					;If different, the Username peripheral contains written characters, jumps to the "CheckPassFieldCycle"
 		ADD R0, 1												;Increments 1 to R0 (next character of the Username peripheral)
-		ADD R9, 1
+		ADD R5, 1
 		JMP CheckUserFieldCycle					;Repeats the cycle until all Username is checked
 
 	CheckPassFieldCycle:
@@ -960,10 +962,12 @@ PLACE 6000H
 		CMP R4, 0												;Compares the value of R4 (character of th Password peripheral) with 0
 		JNE EndOFCheckFormFieldsCycle		;If different, the Password input peripheral contains written characters, jumps to "EndOFCheckFormFieldsCycle"
 		ADD R2, 1												;Increments 1 to the value of the R2 (next Password peripheral character)
-		ADD R10, 1											;Increments the flag that tells if there are characters
+		ADD R6, 1												;Increments the flag that tells if there are characters
 		JMP CheckPassFieldCycle					;Repeats the cycle until all Password is checked				
 
 	EndOFCheckFormFieldsCycle:
+		MOV R9, R5
+		MOV R10, R6
 		POP R4													;Remove the records from the stack
 		POP R3
 		POP R2
@@ -971,7 +975,6 @@ PLACE 6000H
 		POP R0
 		RET
 		
-
 ;-------------------------------------------------------------------------------------------------------------------;
 ;                     		 Routine to save in the Database the Username and Password	  			                     	;
 ;-------------------------------------------------------------------------------------------------------------------;
@@ -984,8 +987,8 @@ PLACE 6000H
 		PUSH R4
 		PUSH R5
 		PUSH R6
-		PUSH R7	
-		PUSH R8	
+		PUSH R7
+		PUSH R8
 		MOV R0, DB_Start								;Move to R0 the address of the start of the Database
 		MOV R1, Iterate_User						;Move to R1 the constant "Iterate_User" to iterate between users
 		MOV R2, Iterate_User_Info				;Move to R2 the constant "Iterate_User_Info" to iterate between the user info (Username, Password and Historic of Purchase)
