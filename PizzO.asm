@@ -26,7 +26,7 @@
 	Total_Euros_End						EQU		0048H		;End address to display the total price
 	Total_Cent_Start					EQU		004AH		;Start address to display cents
 	Total_Cent_End						EQU		004BH		;End address to display cents
-	Pizza_Name_Title_End			EQU		001FH		;	End address to display Pizza Name
+	Pizza_Name_Title_End			EQU		001FH		;End address to display Pizza Name
 
 ;Constants
 
@@ -53,8 +53,9 @@
 	OptSmallPizza				EQU		1				;Small Pizza Option
 	OptLargePizza				EQU 	2				;Large Pizza Option
 
-	OptPayment					EQU		1				;Payment Option
-	OptOrderMore				EQU		2				;Order More Option
+	
+	OptOrderMore				EQU		1				;Order More Option
+	OptPayment					EQU		2				;Payment Option
 
 	OptYes							EQU		1				;Yes Option
 	OptNo								EQU		2				;No Option
@@ -300,7 +301,7 @@ PLACE 2980H
 		STRING "                "
 		STRING " OK to continue "
 
-PLACE 3000H
+PLACE 2A00H
 
 	Pesto:
 		STRING "     Pesto      "
@@ -358,6 +359,7 @@ PLACE 6000H
 		JMP LoginMenu										;Goes back to menu if none where selected
 
 	ConfirmExitMenu:
+		MOV R8, ConfirmExitMenu
 		MOV R2, Confirm_Exit_Menu				;Moves to R2 the address of "Confirm_Exit_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Confirm_Exit_Menu"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
@@ -396,7 +398,7 @@ PLACE 6000H
 		MOV R9, UserPassMaxSize					;Moves to R9 the constant "UserPassMaxSize"
 		CMP R7, R9											;Compares R7 with UserPassMaxSize constant to check if characters are equal to the one in DB
 		JEQ	ExistingUsernamePopUp				;If equal jumps to "ExistingUsernamePopUp"
-		CALL CheckFormFieldsCycle				;Routine to check if any field was left empty
+		CALL CheckFormFieldsRoutine			;Routine to check if any field was left empty
 		CMP R5, 0												;Compares the value of R5 (amount of characters that Username has) with 0
 		JLE MissingFieldPopUp						;If equal, no Username was inserted, jumps to "MissingFieldPopUp"
 		CMP R6, 0												;Compares the value of R6 (amount of characters that Password has) with 0
@@ -455,14 +457,16 @@ PLACE 6000H
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
 		CALL CheckUsername							;Routine to check if the Username inserted is equal to any on the DB
-		MOV R9, UserPassMaxSize 				;Moves to R9 the constant "UserPassMaxSize"
-		CMP R7, R9											;Compares R10 with UserPassMaxSize constant to check if Username exists in DB
-		JLT	UsernameNotFound						;If less than 6, it means that the Username inserted is not in the Database, so jumps to "UsernameNotFound"
+		MOV R3, UserPassMaxSize 				;Moves to R9 the constant "UserPassMaxSize"
+		CMP R7, R3											;Compares R7 with UserPassMaxSize constant to check if Username exists in DB
+		JLT	UsernameNotFound						;If less than UserPassMaxSize, it means that the Username inserted is not in the Database, so jumps to "UsernameNotFound"
 		CALL CheckPassword							;Routine to check the Username and Password
-		CMP R10, R9											;Compares R10 with UserPassMaxSize constant to check if Username exists in DB
+		CMP R9, R3											;Compares R9 with UserPassMaxSize constant to check if Username exists in DB
 		JLT	InvalidPassword							;If less than 6, it means that the Password inserted is not correct Database, so jumps to "InvalidPassword"
-		CALL CleanUserPassRoutine				;Routine to clean the Username and Password inputs
-		JMP	MainMenu
+		JMP	ValidLogin
+
+	JumpToExit:
+		JMP ConfirmExitMenu
 
 	UsernameNotFound:
 		MOV R2, Account_Not_Created_Screen	;Moves to R2 the address of "Account_Not_Created_Screen"
@@ -480,6 +484,13 @@ PLACE 6000H
 		CALL ValidateRoutine						;Routine to validate the selected options
 		JMP LoginForm										;Jumps back to the LoginForm
 
+	ValidLogin:
+		MOV R2, Valid_Login_Screen			;Moves to R2 the address of "Valid_Login_Screen"
+		CALL ShowDisplayRoutine					;Routine to display the "Valid_Login_Screen"
+		CALL CleanUserPassRoutine				;Routine to clean the Username and Password inputs
+		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
+		CALL ValidateRoutine						;Routine to validate the selected options
+
 	MainMenu:
 		MOV R2, Main_Menu								;Moves to R2 the address of "Main_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Main_Menu"
@@ -492,7 +503,7 @@ PLACE 6000H
 		CMP R1, OptOrderPizza						;Compares the value of R1 with the constant "OptOrderPizza"
 		JEQ	PizzaMenu										;If true jumps to "ExitProgram"
 		CMP R1, OptLogout								;Compares the value of R1 with the constant "OptLogout"
-		JEQ	ConfirmExitMenu							;If true jumps to "ConfirmExitMenu"
+		JEQ	JumpToExit									;If true jumps to "ConfirmExitMenu"
 		CALL InvalidOptionRoutine				;If the option selected does not exist calls routine to display invalid option pop up
 		JMP MainMenu										;Goes back to menu if none where selected
 
@@ -506,27 +517,27 @@ PLACE 6000H
 		MOV R0, NR_SEL_Button						;Moves to R0 the address of the peripheral "NR_SEL_Button"
 		MOVB R1, [R0]										;Moves to R1 the content of the address "NR_SEL_Button"
 		CMP R1, OptPesto								;Compares the value of R1 with the constant "OptPesto"
-		MOV R2, Pesto										;Moves to R2 the address of "Pesto"
+		MOV R3, Pesto										;Moves to R2 the address of "Pesto"
 		JEQ	PizzaSizeMenu								;If true jumps to "PizzaSizeMenu"
 		CMP R1, OptFourCheese						;Compares the value of R1 with the constant "OptFourCheese"
-		MOV R2, Four_Cheese							;Moves to R2 the address of "Four_Cheese"
+		MOV R3, Four_Cheese							;Moves to R2 the address of "Four_Cheese"
 		JEQ	PizzaSizeMenu								;If true jumps to "PizzaSizeMenu"
 		CMP R1, OptChicken							;Compares the value of R1 with the constant "OptChicken"
-		MOV R2, Chicken									;Moves to R2 the address of "Chicken"
+		MOV R3, Chicken									;Moves to R2 the address of "Chicken"
 		JEQ	PizzaSizeMenu								;If true jumps to "PizzaSizeMenu"
 		CMP R1, OptShrimp								;Compares the value of R1 with the constant "OptShrimp"
-		MOV R2, Shrimp									;Moves to R2 the address of "Shrimp"
+		MOV R3, Shrimp									;Moves to R2 the address of "Shrimp"
 		JEQ	PizzaSizeMenu								;If true jumps to "PizzaSizeMenu"
 		CMP R1, OptHawaii								;Compares the value of R1 with the constant "OptHawaii"
-		MOV R2, Hawaii									;Moves to R2 the address of "Hawaii"
+		MOV R3, Hawaii									;Moves to R2 the address of "Hawaii"
 		JEQ	PizzaSizeMenu								;If true jumps to "PizzaSizeMenu"
 		CALL InvalidOptionRoutine				;If the option selected does not exist calls routine to display invalid option pop up
 		JMP PizzaMenu										;Goes back to menu if none where selected
 
 	PizzaSizeMenu:	
-		CALL ShowPizzaNameRoutine				;Routine to display pizza name on title
 		MOV R2, Pizza_Size_Menu					;Moves to R2 the address of "Pizza_Size_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Pizza_Size_Menu"
+		CALL ShowPizzaNameRoutine				;Routine to display pizza name on title
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
 		CALL ValidateRoutine						;Routine to validate the selected options
 
@@ -543,6 +554,10 @@ PLACE 6000H
 		JMP PizzaSizeMenu								;Goes back to menu if none where selected
 
 	PaymentMenu:
+		MOV R0, Iterate_User_Info
+		ADD R10, R0
+		ADD R10, R0
+		CALL UpdateUserHistoricRoutine
 		MOV R2, Payment_Menu						;Moves to R2 the address of "Payment_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Payment_Menu"
 		CALL CleanPeripheralsRoutine		;Routine to clean the input peripherals
@@ -642,19 +657,19 @@ PLACE 6000H
 		RET	
 
 ;-------------------------------------------------------------------------------------------------------------------;
-;                     			 Routine to Show Pizza Name(R2) on the title of Pizza Size Menu	                        ;
+;                     			 Routine to Show Pizza Name(R3) on the title of Pizza Size Menu	                        ;
 ;-------------------------------------------------------------------------------------------------------------------;
 	
 	ShowPizzaNameRoutine:
 		PUSH R0													;Saves in Stack the records that are changed during the routine									
 		PUSH R1
-		PUSH R3
+		PUSH R2
 		MOV R0, Display_Start						;Moves to R0 the address of "Display_Start"
 		MOV R1, Pizza_Name_Title_End		;Moves to R1 the address of "Pizza_Name_Title_End"
 
 	CopyToDisplayPizzaNameCycle:
-		MOV R3, [R2]										;Moves from R2(the pizza name to display) to R3
-		MOV [R0], R3										;Moves to the display the pizza name
+		MOV R2, [R3]										;Moves from R2(the pizza name to display) to R3
+		MOV [R0], R2										;Moves to the display the pizza name
 		CMP R0, R1											;Compares the address of "Display_Start" with the address "Pizza_Name_Title_End"
 		JGE EnfOfShowPizzaNameRoutine		;If equal, everythig has been displayed, so terminates the routine
 		ADD R3, 2												;Increments 2 to R3, to move to the next byte to be displayed
@@ -662,7 +677,7 @@ PLACE 6000H
 		JMP CopyToDisplayPizzaNameCycle	;Jump to the address "CopyToDisplayPizzaNameCycle"
 		
 	EnfOfShowPizzaNameRoutine:
-		POP R3													;Removes from Stacks the records							
+		POP R2													;Removes from Stacks the records
 		POP R1
 		POP R0
 		RET	
@@ -839,6 +854,7 @@ PLACE 6000H
 		JEQ	NextCharCycle								;If equal, jumps to "NextCharCycle"
 
 	NextUserCycle:
+		MOV R10, R8											;Moves to R10 the address of the user so that after can save the historic
 		MOV R0, Username_Start					;Resets R0 to the begin os Username peripheral
 		ADD R8, R4											;Iterates to the next username in the database
 		MOV R2, R8											;Moves to R2 that address to the next check
@@ -862,7 +878,7 @@ PLACE 6000H
 		RET
 
 ;-------------------------------------------------------------------------------------------------------------------;
-;                     		 Routine to check if a Password already exists in the Database 		                        ;
+;                     									 Routine to check the login	 		        										                ;
 ;-------------------------------------------------------------------------------------------------------------------;
 
 	CheckPassword:
@@ -923,7 +939,7 @@ PLACE 6000H
 ;                     				 Routine to check if any field on the form was left empty				                     	;
 ;-------------------------------------------------------------------------------------------------------------------;
 
-	CheckFormFieldsCycle:
+	CheckFormFieldsRoutine:
 		PUSH R0													;Saves in Stack the records that are changed during the routine
 		PUSH R1
 		PUSH R2
@@ -947,18 +963,18 @@ PLACE 6000H
 
 	CheckPassFieldCycle:
 		CMP R2, R3											;Compares the start of the Password peripheral with the end
-		JGT EndOFCheckFormFieldsCycle 	;If greater, the peripheral was all checked, jumps to "EndOFCheckFormFieldsCycle"
+		JGT EndOFCheckFormFieldsRoutine 	;If greater, the peripheral was all checked, jumps to "EndOFCheckFormFieldsRoutine"
 		MOVB R4, [R2]										;Moves to R4 the content of the address of R2
 		CMP R4, 0												;Compares the value of R4 (character of the Password peripheral) with 0
 		JGT PasswordCharFound						;If greatter, the Password input peripheral contains written characters, jumps to "PasswordCharFound"
-		JMP EndOFCheckFormFieldsCycle		;Else jumps to terminate the routine
+		JMP EndOFCheckFormFieldsRoutine		;Else jumps to terminate the routine
 
 	PasswordCharFound:
 		ADD R6, 1												;Increments the flag that tells if there are characters
 		ADD R2, 1												;Increments 1 to the value of the R2 (next Password peripheral character)
 		JMP CheckPassFieldCycle
 
-	EndOFCheckFormFieldsCycle:
+	EndOFCheckFormFieldsRoutine:
 		POP R4													;Remove the records from the stack
 		POP R3
 		POP R2
@@ -1030,6 +1046,26 @@ PLACE 6000H
 		POP R4
 		POP R3
 		POP R2
+		POP R1
+		POP R0
+		RET
+
+;-------------------------------------------------------------------------------------------------------------------;
+;                     							 Routine to update user historic of pizzas		  					                     	;
+;-------------------------------------------------------------------------------------------------------------------;
+
+	UpdateUserHistoricRoutine:
+		PUSH R0													;Saves in Stack the records that are changed during the routine
+		PUSH R1
+		MOV R0, R10											;Coloca em R0 o valor de R10 (valor do endereço onde se localiza o histórico de compras)
+		
+	UpdateHistoricCycle:
+		MOVB R1, [R0]										;Coloca em R5 o valor do histórico do utilizador ([R0])
+		ADD R1, R3											;Incrementa o valor do histórico com o valor da pizza
+		MOVB [R0], R1										;Coloca o valor da soma da compra atual com o histórico na posição de memória onde se localiza o histórico
+		JMP EndOfUpdateUserHistoricRoutine			;Salta para o fim da rotina ("EndOfUpdateUserHistoricRoutine")
+		
+	EndOfUpdateUserHistoricRoutine:
 		POP R1
 		POP R0
 		RET
