@@ -30,7 +30,7 @@
 
 ;Constants
 
-	StackPointer				EQU 	9900H		;Endereço base da pilha (stack)
+	StackPointer				EQU 	9900H		;Start address of the stack
 	CleaningCharacter		EQU		20H			;Cleaning character for the display
 	Asterisk						EQU		2AH			;Asterisk character for the presentation of Password
 
