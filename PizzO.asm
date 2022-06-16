@@ -66,8 +66,6 @@
 	UserPassMaxSize			EQU		8				;Maximum character size for Username and Password
 
 	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
-	PedirMais						EQU		1				;Opção para a escolha de mais pizzas por parte do utilizador
-	PagarTotal					EQU 	2				;Opção para a escolha do pagamento do pedido do utilizador
 	Tam_Euros						EQU		3				;Tamanho disponível no display para a representação do dinheiro (Parte Euros)
 	Pular_Historico			EQU		10H			;Valor para poder andar entre as várias posições de endereço para poder visualizar o valor em euros
 	Desconta						EQU		32H			;Valor para subtrair ao histórico caso o valor do histórico seja superior a 50 euros
@@ -556,7 +554,6 @@ PLACE 6000H
 	PaymentMenu:
 		MOV R0, Iterate_User_Info
 		ADD R10, R0
-		ADD R10, R0
 		CALL UpdateUserHistoricRoutine
 		MOV R2, Payment_Menu						;Moves to R2 the address of "Payment_Menu"
 		CALL ShowDisplayRoutine					;Routine to display the "Payment_Menu"
@@ -854,7 +851,6 @@ PLACE 6000H
 		JEQ	NextCharCycle								;If equal, jumps to "NextCharCycle"
 
 	NextUserCycle:
-		MOV R10, R8											;Moves to R10 the address of the user so that after can save the historic
 		MOV R0, Username_Start					;Resets R0 to the begin os Username peripheral
 		ADD R8, R4											;Iterates to the next username in the database
 		MOV R2, R8											;Moves to R2 that address to the next check
@@ -904,6 +900,10 @@ PLACE 6000H
 	VerificatePasswordCycle:
 		CMP R2, R3											;Check if the end of the database as been reached
 		JGT	EndOfCheckPassword					;If yes, jumps to the end of the routine
+		MOV R5, UserPassMaxSize
+		MOV R10, R6
+		CMP R9, R5
+		JGE EndOfCheckPassword
 		CMP R0, R1											;Compares start of Password input peripheral with the end of it
 		JGT	NextPasswordCycle						;If equal, Password all checked, jumps to "NextPasswordCycle"
 		MOVB R7, [R0]										;Moves to R7 the value of the first character in the input
@@ -913,11 +913,11 @@ PLACE 6000H
 	
 	NextPasswordCycle:
 		MOV R0, Password_Start					;Resets R0 to the begin os Password peripheral
-		ADD R6, R4											;Jumps R3 address to the start os Password address in the Database
-		MOV R2, R6
+		ADD R6, R4											;Adds R4 to R6 to jump to the next password in the database
+		MOV R2, R6											;Updates R2 to the address of the next password
 		JMP	VerificatePasswordCycle			;Goes back to "VerificatePasswordCycle"
 
-	NextPassCharCycle:
+	NextPassCharCycle:		
 		ADD R9, 1												;Adds 1 to the variable that saves the number of equal characters
 		ADD R0, 1												;Adds 1 to move to next character on the Password
 		ADD R2, 1												;Adds 1 to move to next character on the database
@@ -1057,13 +1057,13 @@ PLACE 6000H
 	UpdateUserHistoricRoutine:
 		PUSH R0													;Saves in Stack the records that are changed during the routine
 		PUSH R1
-		MOV R0, R10											;Coloca em R0 o valor de R10 (valor do endereço onde se localiza o histórico de compras)
+		MOV R0, R10											;Moves to R0 the value of R10 (address where the purchase history is located)
 		
 	UpdateHistoricCycle:
-		MOVB R1, [R0]										;Coloca em R5 o valor do histórico do utilizador ([R0])
-		ADD R1, R3											;Incrementa o valor do histórico com o valor da pizza
-		MOVB [R0], R1										;Coloca o valor da soma da compra atual com o histórico na posição de memória onde se localiza o histórico
-		JMP EndOfUpdateUserHistoricRoutine			;Salta para o fim da rotina ("EndOfUpdateUserHistoricRoutine")
+		MOVB R1, [R0]										;Moves to R1 the value already stored in the user's history
+		ADD R1, R3											;Increments the value of the history with the selected pizza value
+		MOVB [R0], R1										;Puts the value of the sum of the current purchase with the history in the memory position where the history is located
+		JMP EndOfUpdateUserHistoricRoutine			;Ends the routine
 		
 	EndOfUpdateUserHistoricRoutine:
 		POP R1
