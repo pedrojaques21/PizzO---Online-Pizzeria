@@ -65,11 +65,6 @@
 	Iterate_User_Info		EQU		10H			;Value to be able to iterate between user info (Username, Password, historic)
 	UserPassMaxSize			EQU		8				;Maximum character size for Username and Password
 
-	Total_Compras				EQU 	64H			;Total de compras que pode efetuar no momento, ou seja, Total = Histórico + Compras atuais
-	Tam_Euros						EQU		3				;Tamanho disponível no display para a representação do dinheiro (Parte Euros)
-	Pular_Historico			EQU		10H			;Valor para poder andar entre as várias posições de endereço para poder visualizar o valor em euros
-	Desconta						EQU		32H			;Valor para subtrair ao histórico caso o valor do histórico seja superior a 50 euros
-
 ;Database (Username, Password e purchase history)
 
 	DB_Start	EQU		4000H		;Start address for the Database
